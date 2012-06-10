@@ -9,10 +9,10 @@ Installation
 2. Build/add this project to your own.
 3. Create a PetfinderAPI object using your API key/secret and invoke methods. Example:
 
-'''java
+```
 PetfinderApi api = new PetfinderApi(<key>, <YOUR_SECRET>);
 Pet pet = api.GetPet(123456);
-'''
+```
 
 Notes
 -----
