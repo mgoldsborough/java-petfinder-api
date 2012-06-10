@@ -7,8 +7,6 @@ import java.util.Properties;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Logger;
-
 import com.mg2.petfinder.PetfinderApi;
 import com.mg2.petfinder.PetfinderApiResponseCode;
 import com.mg2.petfinder.exceptions.DeserializationException;
@@ -19,9 +17,6 @@ import com.mg2.petfinder.schemaobjects.Shelter;
 
 public class PetfinderApiUnitTest extends TestCase {
 
-    private static final Logger log = Logger
-	    .getLogger(PetfinderApiUnitTest.class);
-
     private String key;
     private String secret;
 
@@ -29,7 +24,7 @@ public class PetfinderApiUnitTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-	log.info("Setup");
+	System.out.println("Setup");
 
 	Properties prop = new Properties();
 
@@ -41,8 +36,8 @@ public class PetfinderApiUnitTest extends TestCase {
 	    ex.printStackTrace();
 	    fail("Could not load API Key/Secret");
 	}
-	log.info("Key " + key);
-	log.info("Secret " + secret);
+	System.out.println("Key " + key);
+	System.out.println("Secret " + secret);
 
 	api = new PetfinderApi(key, secret);
 
@@ -51,7 +46,7 @@ public class PetfinderApiUnitTest extends TestCase {
 
     @Override
     protected void tearDown() throws Exception {
-	log.info("Tear down");
+	System.out.println("Tear down");
 	super.tearDown();
     }
 
@@ -84,7 +79,7 @@ public class PetfinderApiUnitTest extends TestCase {
 	    PetfinderApi pf = new PetfinderApi(key, secret);
 	    Pet pet = pf.GetPet(21183885);
 	    assertNotNull(pet);
-	    log.info(pet.toString());
+	    System.out.println(pet.toString());
 	} catch (InvalidResponseCodeException e) {
 	    fail("We should not be here.. Check for valid pet ID");
 	} catch (IOException e) {
@@ -104,7 +99,7 @@ public class PetfinderApiUnitTest extends TestCase {
 	} catch (InvalidResponseCodeException e) {
 	    assertNotSame(e.getResponseCode(),
 		    PetfinderApiResponseCode.PFAPI_OK.getResponseCode());
-	    log.info(e.getMessage() + " " + e.getMessage());
+	    System.out.println(e.getMessage() + " " + e.getMessage());
 	} catch (IOException e) {
 	    fail("IOException: Timeout on HTTP GET most likely.. ");
 	} catch (DeserializationException ex) {
@@ -166,8 +161,8 @@ public class PetfinderApiUnitTest extends TestCase {
 	    PetfinderApi pf = new PetfinderApi(key, secret, true);
 
 	    // Provide params
-	    List<Pet> pets = (List<Pet>) pf.FindPets("11731", null, null, "XL", "F",
-		    "Baby", 0, -1);
+	    List<Pet> pets = (List<Pet>) pf.FindPets("11731", null, null, "XL",
+		    "F", "Baby", 0, -1);
 
 	    assertNotNull(pets);
 
@@ -182,13 +177,13 @@ public class PetfinderApiUnitTest extends TestCase {
 		if (photos != null) {
 		    for (Photo photo : photos) {
 			assertNotNull(photo.getId());
-			log.info("Id: " + photo.getId());
+			System.out.println("Id: " + photo.getId());
 
 			assertNotNull(photo.getSize());
-			log.info("Size: " + photo.getSize());
+			System.out.println("Size: " + photo.getSize());
 
 			assertNotNull(photo.getUrlString());
-			log.info("Url: " + photo.getUrlString());
+			System.out.println("Url: " + photo.getUrlString());
 		    }
 		}
 	    }

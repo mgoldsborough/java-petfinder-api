@@ -18,7 +18,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 
@@ -36,7 +35,6 @@ import com.mg2.petfinder.schemaobjects.Pet;
 import com.mg2.petfinder.schemaobjects.Shelter;
 
 public final class PetfinderApi {
-    private static final Logger log = Logger.getLogger(PetfinderApi.class);
 
     private static final String URL = "http://api.petfinder.com/";
 
@@ -122,7 +120,7 @@ public final class PetfinderApi {
 	final String URI = genUri(PetfinderApiMethod.AUTHENTICATE, null);
 
 	if (debug)
-	    log.debug("PetfinderUri: " + URI);
+	    System.out.println("PetfinderUri: " + URI);
 
 	// HTTP GET URI
 	String response = httpGET(URI);
@@ -138,11 +136,13 @@ public final class PetfinderApi {
 	    tokenExpires = formatter.parse(authResponse.getDateExpiresString());
 
 	    if (debug)
-		log.debug(String.format("AuthToken: '%s', Timestamp: '%s'",
-			authToken, tokenExpires));
+		System.out.println(String.format(
+			"AuthToken: '%s', Timestamp: '%s'", authToken,
+			tokenExpires));
 	} catch (ParseException ex) {
-	    log.error(String.format("Parse Exception on timestamp: '%s'",
-		    authResponse.getDateExpiresString()), ex);
+	    System.out.println(String.format(
+		    "Parse Exception on timestamp: '%s'",
+		    authResponse.getDateExpiresString(), ex));
 	}
 
 	return;
@@ -291,9 +291,9 @@ public final class PetfinderApi {
      * @throws DeserializationException
      *             Thrown when the response could be be deserialized.
      */
-    public List<? extends Pet> FindPets(String location, String animal, String breed,
-	    String size, String sex, String age, int offset, int count)
-	    throws IOException, DeserializationException,
+    public List<? extends Pet> FindPets(String location, String animal,
+	    String breed, String size, String sex, String age, int offset,
+	    int count) throws IOException, DeserializationException,
 	    InvalidResponseCodeException {
 	List<String> argList = new ArrayList<String>();
 
@@ -538,8 +538,8 @@ public final class PetfinderApi {
 	final int keyId = randInt.nextInt(numKeys);
 
 	if (debug)
-	    log.debug(String.format("Key: '%s', Secret: '%s'", keys[keyId],
-		    secrets[keyId]));
+	    System.out.println(String.format("Key: '%s', Secret: '%s'",
+		    keys[keyId], secrets[keyId]));
 
 	if (args != null) {
 	    // Loop over all args and append them to StringBuilder
@@ -557,7 +557,7 @@ public final class PetfinderApi {
 	final String urn = builder.toString();
 
 	if (debug)
-	    log.debug("URN: " + urn);
+	    System.out.println("URN: " + urn);
 
 	final String signature = genSignature(secrets[keyId], urn);
 	final String URI = URL + method + urn + "&sig=" + signature;
@@ -584,7 +584,7 @@ public final class PetfinderApi {
 	    while ((str = in.readLine()) != null) {
 
 		if (debug)
-		    log.debug(str);
+		    System.out.println(str);
 
 		builder.append(str);
 	    }
@@ -592,9 +592,9 @@ public final class PetfinderApi {
 	    in.close();
 	    return builder.toString();
 	} catch (MalformedURLException e) {
-	    log.error("MalformedURLException: " + uri);
+	    System.out.println("MalformedURLException: " + uri);
 	} catch (IOException e) {
-	    log.error("IOException trying to GET: " + uri);
+	    System.out.println("IOException trying to GET: " + uri);
 	    throw e;
 	}
 	return "";
@@ -611,7 +611,8 @@ public final class PetfinderApi {
 	// Token has expired, reset authentication
 	else if (tokenExpires.compareTo(Calendar.getInstance().getTime()) < 0) {
 	    try {
-		log.error("Auth token is expired. Resetting authentication.");
+		System.out
+			.println("Auth token is expired. Resetting authentication.");
 	    } catch (NoClassDefFoundError ex) {
 		System.out
 			.println("Auth token is expired. Resetting authentication");
