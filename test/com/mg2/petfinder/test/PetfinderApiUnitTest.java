@@ -166,7 +166,7 @@ public class PetfinderApiUnitTest extends TestCase {
 	    PetfinderApi pf = new PetfinderApi(key, secret, true);
 
 	    // Provide params
-	    List<Pet> pets = pf.FindPets("11731", null, null, "XL", "F",
+	    List<Pet> pets = (List<Pet>) pf.FindPets("11731", null, null, "XL", "F",
 		    "Baby", 0, -1);
 
 	    assertNotNull(pets);

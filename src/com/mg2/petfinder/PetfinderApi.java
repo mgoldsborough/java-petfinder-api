@@ -291,7 +291,7 @@ public final class PetfinderApi {
      * @throws DeserializationException
      *             Thrown when the response could be be deserialized.
      */
-    public List<Pet> FindPets(String location, String animal, String breed,
+    public List<? extends Pet> FindPets(String location, String animal, String breed,
 	    String size, String sex, String age, int offset, int count)
 	    throws IOException, DeserializationException,
 	    InvalidResponseCodeException {
