@@ -1,6 +1,7 @@
 package com.mg2.petfinder.schemaobjects.types;
 
 public enum AgeType {
+    	HINT("Age (Optional)", ""),
 	SMALL("Baby"),
 	MED("Young"),
 	LARGE("Adult"),

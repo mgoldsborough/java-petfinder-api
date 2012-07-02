@@ -1,6 +1,7 @@
 package com.mg2.petfinder.schemaobjects.types;
 
 public enum GenderType {
+    	HINT("Gender (Optional)", ""),
 	Male("Male", "M"), 
 	Female("Female", "F");
 

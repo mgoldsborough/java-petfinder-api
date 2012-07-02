@@ -2,6 +2,7 @@ package com.mg2.petfinder.schemaobjects.types;
 
 public enum DogType implements IBreedType {
 	// DOG BREEDS
+    	HINT("Breed (Optional)", ""), 
 	AFFENPINSCHER("Affenpinscher", "Affenpinscher"),
 	AFGHAN_HOUND("Afghan Hound", "Afghan%20Hound"),
 	AIREDALE_TERRIER("Airedale Terrier", "Airedale%20Terrier"),

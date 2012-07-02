@@ -1,7 +1,8 @@
 Petfinder API for Java
 ======================
 
-Simple Java library for integrating with the Petfiner API.
+Simple Java library for integrating with the Petfiner API (http://www.petfinder.com/developers/api-docs).  
+Uses of Gson library (http://code.google.com/p/google-gson/) to serialize JSON responses. 
 
 Installation
 ------------
@@ -17,7 +18,6 @@ Pet pet = api.GetPet(123456);
 Notes
 -----
 - If you are testing the library itself, you'll need to set the API_KEY/API_SECRET values in the PetfinderApi.properties. 
-- We use SimpleXML v2.6.2 (http://simple.sourceforge.net/) to serialize responses.  You'll need to download it and add it to your build path.
-- Petfinder docs: http://www.petfinder.com/developers/api-docs
+- Built against GSON v2.2.1.
 
 This library is still a work in progress...

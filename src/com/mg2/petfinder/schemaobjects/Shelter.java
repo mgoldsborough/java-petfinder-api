@@ -1,61 +1,47 @@
 package com.mg2.petfinder.schemaobjects;
 
-import org.simpleframework.xml.Element;
+import com.mg2.petfinder.wrappers.StringWrapper;
 
 public class Shelter {
-    @Element(required = false)
-    public String id;
+    public StringWrapper id;
 
-    @Element(required = false)
-    public String name;
+    public StringWrapper name;
 
-    @Element(required = false)
-    public String address1;
+    public StringWrapper address1;
 
-    @Element(required = false)
-    public String address2;
+    public StringWrapper address2;
 
-    @Element(required = false)
-    public String city;
+    public StringWrapper city;
 
-    @Element(required = false)
-    public String state;
+    public StringWrapper state;
 
-    @Element(required = false)
-    public String zip;
+    public StringWrapper zip;
 
-    @Element(required = false)
-    public String country;
+    public StringWrapper country;
 
-    @Element(required = false)
-    public String latitude;
+    public StringWrapper latitude;
 
-    @Element(required = false)
-    public String longitude;
+    public StringWrapper longitude;
 
-    @Element(required = false)
-    public String phone;
+    public StringWrapper phone;
 
-    @Element(required = false)
-    public String fax;
+    public StringWrapper fax;
 
-    @Element(required = false)
-    public String email;
+    public StringWrapper email;
 
     public String getShelter() {
-	return this.email;
+	return email.toString();
     }
 
     public String getName() {
-	return this.name;
+	return name.toString();
     }
 
     public String getState() {
-	return this.state;
+	return state.toString();
     }
 
     public String getCity() {
-	return this.city;
+	return this.city.toString();
     }
-
 }

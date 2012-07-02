@@ -2,17 +2,18 @@ package com.mg2.petfinder.test;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Properties;
 
 import junit.framework.TestCase;
 
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import com.mg2.petfinder.PetfinderApi;
 import com.mg2.petfinder.PetfinderApiResponseCode;
-import com.mg2.petfinder.exceptions.DeserializationException;
 import com.mg2.petfinder.exceptions.InvalidResponseCodeException;
+import com.mg2.petfinder.responseobjects.GetPet;
+import com.mg2.petfinder.responseobjects.PetfinderResponse;
 import com.mg2.petfinder.schemaobjects.Pet;
-import com.mg2.petfinder.schemaobjects.Photo;
 import com.mg2.petfinder.schemaobjects.Shelter;
 
 public class PetfinderApiUnitTest extends TestCase {
@@ -39,7 +40,7 @@ public class PetfinderApiUnitTest extends TestCase {
 	System.out.println("Key " + key);
 	System.out.println("Secret " + secret);
 
-	api = new PetfinderApi(key, secret);
+	api = new PetfinderApi(key, secret, true);
 
 	super.setUp();
     }
@@ -58,8 +59,8 @@ public class PetfinderApiUnitTest extends TestCase {
 	    api.Authenticate();
 	} catch (IOException e) {
 	    fail("IOException: Timeout on HTTP GET most likely.. ");
-	} catch (DeserializationException ex) {
-	    fail("XML deserialize exception:" + ex.getMessage());
+	} catch (JsonParseException e) {
+	    fail("JSON deserialize exception:" + e.getMessage());
 	}
 	assertTrue(api.isAuthenticated());
     }
@@ -76,16 +77,22 @@ public class PetfinderApiUnitTest extends TestCase {
      */
     public void testGetPetSuccess() {
 	try {
-	    PetfinderApi pf = new PetfinderApi(key, secret);
-	    Pet pet = pf.GetPet(21183885);
+	    PetfinderApi pf = new PetfinderApi(key, secret, true);
+
+	    Pet pet = pf.GetPet(23151980,
+		    new TypeToken<PetfinderResponse<GetPet<Pet>>>() {
+		    }.getType());
+	    System.out.println(pet.getOptions().toString());
 	    assertNotNull(pet);
 	    System.out.println(pet.toString());
+	    System.out.println(pet.getBreedListString());
+	    System.out.println(pet.getOptionsListString());
 	} catch (InvalidResponseCodeException e) {
 	    fail("We should not be here.. Check for valid pet ID");
 	} catch (IOException e) {
 	    fail("IOException: Timeout on HTTP GET most likely.. ");
-	} catch (DeserializationException ex) {
-	    fail("XML deserialize exception:" + ex.getMessage());
+	} catch (JsonParseException ex) {
+	    fail("JSON deserialize exception:" + ex.getMessage());
 	}
     }
 
@@ -95,15 +102,17 @@ public class PetfinderApiUnitTest extends TestCase {
     public void testGetPetInvalidPetID() {
 	Pet pet = null;
 	try {
-	    pet = api.GetPet(99999999);
+	    pet = api.GetPet(99999999,
+		    new TypeToken<PetfinderResponse<GetPet<Pet>>>() {
+		    }.getType());
 	} catch (InvalidResponseCodeException e) {
 	    assertNotSame(e.getResponseCode(),
 		    PetfinderApiResponseCode.PFAPI_OK.getResponseCode());
 	    System.out.println(e.getMessage() + " " + e.getMessage());
 	} catch (IOException e) {
 	    fail("IOException: Timeout on HTTP GET most likely.. ");
-	} catch (DeserializationException ex) {
-	    fail("XML deserialize exception:" + ex.getMessage());
+	} catch (JsonParseException e) {
+	    fail("JSON deserialize exception:" + e.getMessage());
 	}
 	assertNull(pet);
     }
@@ -114,14 +123,17 @@ public class PetfinderApiUnitTest extends TestCase {
     public void testGetBreedList() {
 	try {
 	    api.Authenticate();
-	    List<String> breedList = api.GetBreedList("dog");
+	    String[] breedList = api.GetBreedList("dog");
 	    assertNotNull(breedList);
+	    for (String str : breedList) {
+		System.out.println(str);
+	    }
 	} catch (InvalidResponseCodeException e) {
 	    fail("We should not be here");
 	} catch (IOException e) {
 	    fail("IOException: Timeout on HTTP GET most likely.. ");
-	} catch (DeserializationException ex) {
-	    fail("XML deserialize exception:" + ex.getMessage());
+	} catch (JsonParseException ex) {
+	    fail("JSON deserialize exception:" + ex.getMessage());
 	}
     }
 
@@ -129,90 +141,86 @@ public class PetfinderApiUnitTest extends TestCase {
 
 	String city = "New York, NY";
 	try {
-	    List<Shelter> shelters = api.GetShelterList(city, 1);
+	    Shelter[] shelters = api.GetShelterList(city, 1);
 	    assertNotNull(shelters);
+
+	    for (Shelter shelter : shelters) {
+		System.out.println(shelter.getName());
+	    }
 	} catch (InvalidResponseCodeException e) {
 	    fail("Invalid response code.  Header was f'd");
 	} catch (IOException e) {
 	    fail("IOException: Timeout on HTTP GET most likely.. ");
-	} catch (DeserializationException ex) {
-	    fail("XML deserialize exception:" + ex.getMessage());
+	} catch (JsonParseException e) {
+	    fail("JSON deserialize exception:" + e.getMessage());
 	}
     }
 
-    public void testGetShelterPetsSuccess() { // Shelter opt out: WY57
+    public void testGetShelterPetsSuccess() {
 
 	try {
 	    api.Authenticate();
-	    List<Pet> pets = api.GetShelterPets("DE20");
+	    Pet[] pets = api.GetShelterPets("DE20");
 	    assertNotNull(pets);
 	} catch (InvalidResponseCodeException e) {
 	    e.printStackTrace();
 	    fail("Invalid response code.  Header was f'd");
 	} catch (IOException e) {
 	    fail("IOException: Timeout on HTTP GET most likely.. ");
-	} catch (DeserializationException ex) {
-	    fail("XML deserialize exception:" + ex.getMessage());
+	} catch (JsonParseException e) {
+	    fail("JSON deserialize exception:" + e.getMessage());
 	}
     }
 
     public void testFindPets() {
 	try {
-	    PetfinderApi pf = new PetfinderApi(key, secret, true);
-
 	    // Provide params
-	    List<Pet> pets = (List<Pet>) pf.FindPets("11731", null, null, "XL",
-		    "F", "Baby", 0, -1);
+	    Pet[] pets = api.FindPets("19806", null, null, "XL", "F", "Baby",
+		    0, 2);
 
 	    assertNotNull(pets);
 
-	    if (pets.size() < 1)
+	    if (pets.length < 1)
 		fail("List does not contain any pets");
 
 	    for (Pet pet : pets) {
 		assertNotNull(pet);
 
-		List<Photo> photos = pet.getMedia().getPhotoList(); //
+		String[] urls = pet.getMedia().getPhotoUrlList();
 
-		if (photos != null) {
-		    for (Photo photo : photos) {
-			assertNotNull(photo.getId());
-			System.out.println("Id: " + photo.getId());
-
-			assertNotNull(photo.getSize());
-			System.out.println("Size: " + photo.getSize());
-
-			assertNotNull(photo.getUrlString());
-			System.out.println("Url: " + photo.getUrlString());
+		if (urls != null) {
+		    for (String url : urls) {
+			System.out.println("Url: " + url.toString());
 		    }
 		}
 	    }
 
 	    assertNotNull(pets);
 	} catch (InvalidResponseCodeException e) {
+	    e.printStackTrace();
 	    fail("We should not be here.. Check for valid pet ID");
 	} catch (IOException e) {
 	    fail("IOException: Timeout on HTTP GET most likely.. ");
-	} catch (DeserializationException ex) {
-	    fail("XML deserialize exception:" + ex.getMessage());
+	} catch (JsonParseException e) {
+	    fail("JSON deserialize exception:" + e.getMessage());
 	}
     }
 
-    /**
-     * DOES NOT WORK.
-     */
     public void testGetShelterListByBreed() {
 	try {
-	    List<Shelter> shelters = api
-		    .GetShelterListByBreed("cat", "siamese");
+	    Shelter[] shelters = api.GetShelterListByBreed("cat", "siamese");
 	    assertNotNull(shelters);
+
+	    for (Shelter shelter : shelters) {
+		System.out.println(shelter.getName());
+	    }
 	} catch (InvalidResponseCodeException e) { //
 	    e.printStackTrace();
 	    fail("Invalid response code.  Header was f'd");
 	} catch (IOException e) {
 	    fail("IOException: Timeout on HTTP GET most likely.. ");
-	} catch (DeserializationException ex) {
-	    fail("XML deserialize exception:" + ex.getMessage());
+	} catch (JsonParseException e) {
+	    fail("JSON deserialize exception:" + e.getMessage());
 	}
     }
 }

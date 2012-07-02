@@ -1,145 +1,121 @@
 package com.mg2.petfinder.schemaobjects;
 
-import java.util.List;
-
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
-
 import com.mg2.petfinder.schemaobjects.types.AgeType;
+import com.mg2.petfinder.schemaobjects.types.AnimalType;
 import com.mg2.petfinder.schemaobjects.types.GenderType;
 import com.mg2.petfinder.schemaobjects.types.SizeType;
 import com.mg2.petfinder.schemaobjects.types.StatusType;
+import com.mg2.petfinder.wrappers.IntWrapper;
+import com.mg2.petfinder.wrappers.StringWrapper;
 
-@Root(name = "pet")
 public class Pet {
+
+    protected IntWrapper id;
+    protected StringWrapper name;
+    protected StringWrapper age;
+    protected StringWrapper sex;
+    protected StringWrapper size;
+    protected StringWrapper animal;
+    protected StringWrapper description;
+    protected StringWrapper mix;
+    protected StringWrapper shelterId;
+    protected StringWrapper shelterPetId;
+    protected StringWrapper lastUpdate;
+    protected StringWrapper status;
+
+    protected Breeds breeds;
+    protected Options options;
+
+    protected Media media;
+    protected Contact contact;
 
     public Pet() {
     }
 
-    @Element
-    protected int id;
-
-    @Element
-    protected String shelterId;
-
-    @Element(required = false)
-    protected String shelterPetId;
-
-    @Element
-    protected String name;
-
-    @Element
-    protected String animal;
-
-    @ElementList(name = "breeds")
-    protected List<String> breeds;
-
-    @Element
-    protected String mix;
-
-    @Element
-    protected String age;
-
-    @Element
-    protected String sex;
-
-    @Element
-    protected String size;
-
-    @ElementList(name = "options")
-    protected List<String> options;
-
-    @Element(name = "description", required = false)
-    protected String description;
-
-    @Element(name = "lastUpdate")
-    protected String lastUpdate;
-
-    @Element(name = "status")
-    protected String status;
-
-    @Element(name = "media", required = false)
-    protected Media media;
-
-    @Element(name = "contact")
-    protected Contact contact;
+    public int getId() {
+	return this.id.getInt();
+    }
 
     public String getName() {
-	return this.name;
+	return name.toString();
     }
 
-    @Override
-    public String toString() {
-	return this.name;
+    public String getMix() {
+	return mix.toString();
     }
 
-    public int getId() {
-	return this.id;
+    public String getShelterId() {
+	return shelterId.toString();
+    }
+
+    public String getLastUpdate() {
+	return lastUpdate.toString();
+    }
+
+    public StringWrapper getShelterPetId() {
+	return shelterPetId;
     }
 
     public Media getMedia() {
-	return this.media;
+	return media;
+    }
+
+    public Options getOptions() {
+	return options;
+    }
+
+    @Override
+    public int hashCode() {
+	return id.getInt();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+	if (this == obj)
+	    return true;
+
+	if (!(obj instanceof Pet))
+	    return false;
+
+	Pet pet = (Pet) obj;
+
+	if (id.getInt() == pet.getId()) {
+	    return true;
+	}
+	return false;
     }
 
     public String getBreedListString() {
-	if (breeds == null || breeds.size() == 0)
-	    return "";
-
-	String prefix = "";
-	StringBuilder sb = new StringBuilder();
-	for (String breed : breeds) {
-	    sb.append(prefix);
-	    sb.append(breed);
-	    prefix = ", ";
-	}
-	return sb.toString();
+	return breeds.toString();
     }
 
     public String getOptionsListString() {
-	if (options == null || options.size() == 0)
-	    return "None";
-	String prefix = "";
-	StringBuilder sb = new StringBuilder();
-
-	for (String option : options) {
-	    sb.append(prefix);
-	    sb.append(option);
-	    prefix = ", ";
-	}
-	return sb.toString();
+	return options.toString();
     }
 
     public String getDescription() {
-	if (description == null)
+	if (description.toString() == null || description.toString().isEmpty())
 	    return "No description.";
 
-	return description.replace("<div>", "").replace("</div>", "");
+	return description.toString().replace("<div>", "")
+		.replace("</div>", "");
     }
 
     public Contact getContact() {
 	return contact;
     }
 
-    public String getAnimal() {
-	return animal.toString();
+    public AnimalType getAnimal() {
+	return AnimalType.valueOf(animal.toString());
     }
 
     public GenderType getSex() {
-	for (GenderType type : GenderType.values()) {
-	    if (type.getValue().equals(this.sex))
-		return type;
-	}
+	return GenderType.valueOf(sex.toString());
 
-	return null;
     }
 
     public SizeType getSize() {
-	for (SizeType type : SizeType.values()) {
-	    if (type.getValue().equals(this.size))
-		return type;
-	}
-	return null;
+	return SizeType.valueOf(size.toString());
     }
 
     public AgeType getAge() {
@@ -163,24 +139,4 @@ public class Pet {
 		.getName(), getSize().getName());
     }
 
-    @Override
-    public int hashCode() {
-	return this.id;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-	if (this == obj)
-	    return true;
-
-	if (!(obj instanceof Pet))
-	    return false;
-
-	Pet pet = (Pet) obj;
-
-	if (this.id == pet.getId()) {
-	    return true;
-	}
-	return false;
-    }
 }

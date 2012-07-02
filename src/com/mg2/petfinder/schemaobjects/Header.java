@@ -1,22 +1,29 @@
 package com.mg2.petfinder.schemaobjects;
 
-import org.simpleframework.xml.Element;
-
 import com.mg2.petfinder.PetfinderApiResponseCode;
 import com.mg2.petfinder.exceptions.InvalidResponseCodeException;
+import com.mg2.petfinder.wrappers.StringWrapper;
 
 public class Header {
-    @Element
-    String version;
 
-    @Element
-    public String timestamp;
-
-    @Element
-    public Status status;
+    private StringWrapper timestamp;
+    private StringWrapper message;
+    private Status status;
 
     public Header() {
 
+    }
+
+    public Status getStatus() {
+	return status;
+    }
+
+    public String getTimestamp() {
+	return timestamp.toString();
+    }
+
+    public String getMessage() {
+	return message.toString();
     }
 
     public void validate() throws InvalidResponseCodeException {
@@ -26,5 +33,11 @@ public class Header {
 		.getResponseCode())
 	    throw new InvalidResponseCodeException(status.getCode(),
 		    status.getMessage());
+    }
+
+    @Override
+    public String toString() {
+	return "Header [timestamp=" + timestamp + ", message=" + message
+		+ ", status=" + status + "]";
     }
 }

@@ -1,107 +1,90 @@
 package com.mg2.petfinder.schemaobjects;
 
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.Root;
+import com.mg2.petfinder.wrappers.StringWrapper;
 
-@Root(name = "contact")
 public class Contact {
-    @Element(required = false)
-    String name;
 
-    @Element(required = false)
-    String address1;
+    private StringWrapper name;
+    private StringWrapper address1;
+    private StringWrapper address2;
+    private StringWrapper city;
+    private StringWrapper state;
+    private StringWrapper phone;
+    private StringWrapper fax;
+    private StringWrapper email;
 
-    @Element(required = false)
-    String address2;
-
-    @Element(required = false)
-    String city;
-
-    @Element(required = false)
-    String state;
-
-    @Element(required = false)
-    String zip;
-
-    @Element(required = false)
-    String phone;
-
-    @Element(required = false)
-    String fax;
-
-    @Element(required = false)
-    String email;
-
-    public String getPhone() {
-	return phone;
-    }
+    private StringWrapper zip;
 
     public String getName() {
-	return name;
-    }
-
-    public void setName(String name) {
-	this.name = name;
+	return name.toString();
     }
 
     public String getAddress1() {
-	return address1;
-    }
-
-    public void setAddress1(String address1) {
-	this.address1 = address1;
+	return address1.toString();
     }
 
     public String getAddress2() {
-	return address2;
-    }
-
-    public void setAddress2(String address2) {
-	this.address2 = address2;
+	return address2.toString();
     }
 
     public String getCity() {
-	return city;
-    }
-
-    public void setCity(String city) {
-	this.city = city;
+	return city.toString();
     }
 
     public String getState() {
-	return state;
+	return state.toString();
     }
 
-    public void setState(String state) {
-	this.state = state;
-    }
-
-    public String getZip() {
-	return zip;
-    }
-
-    public void setZip(String zip) {
-	this.zip = zip;
+    public String getPhone() {
+	return phone.toString();
     }
 
     public String getFax() {
-	return fax;
-    }
-
-    public void setFax(String fax) {
-	this.fax = fax;
+	return fax.toString();
     }
 
     public String getEmail() {
-	return email;
+	return email.toString();
     }
 
-    public void setEmail(String email) {
-	this.email = email;
+    public String getZip() {
+	return zip.toString();
+    }
+
+    public void setName(String name) {
+	this.name = new StringWrapper(name);
+    }
+
+    public void setAddress1(String address1) {
+	this.address1 = new StringWrapper(address1);
+    }
+
+    public void setAddress2(String address2) {
+	this.address2 = new StringWrapper(address2);
+    }
+
+    public void setCity(String city) {
+	this.city = new StringWrapper(city);
+    }
+
+    public void setState(String state) {
+	this.state = new StringWrapper(state);
     }
 
     public void setPhone(String phone) {
-	this.phone = phone;
+	this.phone = new StringWrapper(phone);
+    }
+
+    public void setFax(String fax) {
+	this.fax = new StringWrapper(fax);
+    }
+
+    public void setEmail(String email) {
+	this.email = new StringWrapper(email);
+    }
+
+    public void setZip(String zip) {
+	this.zip = new StringWrapper(zip);
     }
 
     @Override

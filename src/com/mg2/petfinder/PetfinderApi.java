@@ -4,35 +4,38 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import org.simpleframework.xml.Serializer;
-import org.simpleframework.xml.core.Persister;
-
-import com.mg2.petfinder.exceptions.DeserializationException;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+import com.mg2.petfinder.adapters.ShelterArrayAdapter;
+import com.mg2.petfinder.adapters.StringArrayAdapter;
 import com.mg2.petfinder.exceptions.InvalidResponseCodeException;
-import com.mg2.petfinder.responseobjects.AuthenticateResponse;
-import com.mg2.petfinder.responseobjects.GetBreedListResponse;
-import com.mg2.petfinder.responseobjects.GetPetListResponse;
-import com.mg2.petfinder.responseobjects.GetPetResponse;
-import com.mg2.petfinder.responseobjects.GetShelterListByBreedResponse;
-import com.mg2.petfinder.responseobjects.GetShelterListResponse;
-import com.mg2.petfinder.responseobjects.GetShelterPetsResponse;
-import com.mg2.petfinder.responseobjects.GetShelterResponse;
+import com.mg2.petfinder.responseobjects.FindPets;
+import com.mg2.petfinder.responseobjects.GetBreedList;
+import com.mg2.petfinder.responseobjects.GetPet;
+import com.mg2.petfinder.responseobjects.GetShelter;
+import com.mg2.petfinder.responseobjects.GetShelterList;
+import com.mg2.petfinder.responseobjects.GetShelterListByBreed;
+import com.mg2.petfinder.responseobjects.GetShelterPets;
+import com.mg2.petfinder.responseobjects.GetToken;
+import com.mg2.petfinder.responseobjects.PetfinderResponse;
 import com.mg2.petfinder.schemaobjects.Pet;
 import com.mg2.petfinder.schemaobjects.Shelter;
+import com.mg2.petfinder.wrappers.StringArrayWrapper;
 
 public final class PetfinderApi {
 
@@ -42,14 +45,10 @@ public final class PetfinderApi {
 
     private static final Random randInt = new Random();
 
-    // Formatter for date/times returned from Petfinder API
-    private static final SimpleDateFormat formatter = new SimpleDateFormat(
-	    "yyyy-MM-dd'T'HH:mm:ss");
-
     private String authToken = null;
     private Date tokenExpires = null;
 
-    private List<Pet> lastPetResponse = null;
+    private Pet[] lastPetResponse = null;
     private int lastOffset = 0;
 
     private String[] keys;
@@ -112,10 +111,11 @@ public final class PetfinderApi {
      * 
      * @throws IOException
      *             Thrown when the request to the PF API was unsuccessful.
-     * @throws DeserializationException
-     *             Thrown when the response could be be deserialized.
+     * @throws JsonParseException
+     *             Thrown when the JSON response from Petfinder could not be
+     *             parsed by the GSON parser.
      */
-    public void Authenticate() throws IOException, DeserializationException {
+    public void Authenticate() throws IOException, JsonParseException {
 
 	final String URI = genUri(PetfinderApiMethod.AUTHENTICATE, null);
 
@@ -125,25 +125,22 @@ public final class PetfinderApi {
 	// HTTP GET URI
 	String response = httpGET(URI);
 
-	// Serialize XML, get authorization token and when it expires.
-	// Save to class variables
-	AuthenticateResponse authResponse = deserialize(
-		AuthenticateResponse.class, response);
+	Gson gson = buildGson();
+
+	Type type = new TypeToken<PetfinderResponse<GetToken>>() {
+	}.getType();
+
+	PetfinderResponse<GetToken> authResponse = gson
+		.fromJson(response, type);
 
 	// Get auth token and parse datetime from response into Java date object
-	authToken = authResponse.getAuthToken();
-	try {
-	    tokenExpires = formatter.parse(authResponse.getDateExpiresString());
+	authToken = authResponse.getPetfinder().getAuth().getToken();
+	tokenExpires = authResponse.getPetfinder().getAuth().getTokenExpires();
 
-	    if (debug)
-		System.out.println(String.format(
-			"AuthToken: '%s', Timestamp: '%s'", authToken,
-			tokenExpires));
-	} catch (ParseException ex) {
-	    System.out.println(String.format(
-		    "Parse Exception on timestamp: '%s'",
-		    authResponse.getDateExpiresString(), ex));
-	}
+	if (debug)
+	    System.out.println(String
+		    .format("AuthToken: '%s', Timestamp: '%s'", authToken,
+			    tokenExpires));
 
 	return;
     }
@@ -161,30 +158,35 @@ public final class PetfinderApi {
      *             response code.
      * @throws IOException
      *             Thrown when the request to the PF API was unsuccessful.
-     * @throws DeserializationException
-     *             Thrown when the response could be be deserialized.
+     * @throws JsonParseException
+     *             Thrown when the JSON response from Petfinder could not be
+     *             parsed by the GSON parser.
      */
-    public Pet GetPet(int id) throws InvalidResponseCodeException, IOException,
-	    DeserializationException {
+    public <T extends Pet> T GetPet(int id, Type type)
+	    throws InvalidResponseCodeException, IOException,
+	    JsonParseException {
 
-	// Set method/args for request
-	final String[] args = { "id=" + id };
-	// "token=" + this.authToken };
+	final String[] args = { String.format("id=%s", id) };
 
 	// Generate URI
 	final String URI = genUri(PetfinderApiMethod.GET_PET, args);
 
 	// Perform HTTP GET
-	String response = httpGET(URI);
+	String jsonStr = httpGET(URI);
 
-	// Parse XML
-	GetPetResponse getPetResponse = deserialize(GetPetResponse.class,
-		response);
+	Gson gson = buildGson();
+
+	PetfinderResponse<GetPet<T>> response = new PetfinderResponse<GetPet<T>>();
+
+	// Type type = new TypeToken<PetfinderResponse<GetPet<T>>>() {
+	// }.getType();
+
+	response = gson.fromJson(jsonStr, type);
 
 	// Validate. Throws InvalidResponseCode Exception
-	getPetResponse.validate();
+	response.getPetfinder().validate();
 
-	return getPetResponse.getPet();
+	return response.getPetfinder().getPet();
     }
 
     /**
@@ -213,13 +215,14 @@ public final class PetfinderApi {
      *             response code.
      * @throws IOException
      *             Thrown when the request to the PF API was unsuccessful.
-     * @throws DeserializationException
-     *             Thrown when the response could be be deserialized.
+     * @throws JsonParseException
+     *             Thrown when the JSON response from Petfinder could not be
+     *             parsed by the GSON parser.
      */
-    public Pet GetRandomPet(String location, String animal, String breed,
-	    String size, String sex, String shelter)
+    public <T extends Pet> T GetRandomPet(String location, String animal,
+	    String breed, String size, String sex, String shelter)
 	    throws InvalidResponseCodeException, IOException,
-	    DeserializationException {
+	    JsonParseException {
 	List<String> argList = new ArrayList<String>();
 
 	if (!(animal == null || animal.equals("")))
@@ -252,15 +255,19 @@ public final class PetfinderApi {
 
 	String response = httpGET(URI);
 
+	Gson gson = buildGson();
+
+	Type type = new TypeToken<PetfinderResponse<GetPet<Pet>>>() {
+	}.getType();
+
 	// Parse XML
-	GetPetResponse getPetResponse = deserialize(GetPetResponse.class,
-		response);
+	PetfinderResponse<GetPet<T>> getPetResponse = gson.fromJson(response,
+		type);
 
 	// Validate. Throws InvalidResponseCode Exception
-	getPetResponse.validate();
+	getPetResponse.getPetfinder().validate();
 
-	return getPetResponse.getPet();
-
+	return getPetResponse.getPetfinder().getPet();
     }
 
     /**
@@ -288,12 +295,13 @@ public final class PetfinderApi {
      *             response code.
      * @throws IOException
      *             Thrown when the request to the PF API was unsuccessful.
-     * @throws DeserializationException
-     *             Thrown when the response could be be deserialized.
+     * @throws JsonParseException
+     *             Thrown when the JSON response from Petfinder could not be
+     *             parsed by the GSON parser.
      */
-    public List<? extends Pet> FindPets(String location, String animal,
+    public <T extends Pet> T[] FindPets(String location, String animal,
 	    String breed, String size, String sex, String age, int offset,
-	    int count) throws IOException, DeserializationException,
+	    int count) throws IOException, JsonParseException,
 	    InvalidResponseCodeException {
 	List<String> argList = new ArrayList<String>();
 
@@ -328,17 +336,21 @@ public final class PetfinderApi {
 
 	String response = httpGET(URI);
 
-	// Deserialize XML
-	GetPetListResponse getPetsResponse = deserialize(
-		GetPetListResponse.class, response);
+	Type type = new TypeToken<PetfinderResponse<FindPets<Pet>>>() {
+	}.getType();
+
+	Gson gson = buildGson();
+
+	PetfinderResponse<FindPets<T>> getPetsResponse = gson.fromJson(
+		response, type);
 
 	// Validate. Throws InvalidResponseCode Exception
-	getPetsResponse.validate();
+	getPetsResponse.getPetfinder().validate();
 
-	lastPetResponse = getPetsResponse.getPetList();
-	lastOffset = getPetsResponse.getLastOffset();
+	lastPetResponse = getPetsResponse.getPetfinder().getPets();
+	lastOffset = getPetsResponse.getPetfinder().getLastOffset();
 
-	return getPetsResponse.getPetList();
+	return getPetsResponse.getPetfinder().getPets();
     }
 
     /**
@@ -355,11 +367,12 @@ public final class PetfinderApi {
      *             response code.
      * @throws IOException
      *             Thrown when the request to the PF API was unsuccessful.
-     * @throws DeserializationException
-     *             Thrown when the response could be be deserialized.
+     * @throws JsonParseException
+     *             Thrown when the JSON response from Petfinder could not be
+     *             parsed by the GSON parser.
      */
-    public List<Shelter> GetShelterList(String location, int count)
-	    throws IOException, DeserializationException,
+    public Shelter[] GetShelterList(String location, int count)
+	    throws IOException, JsonParseException,
 	    InvalidResponseCodeException {
 	List<String> argList = new ArrayList<String>();
 
@@ -376,13 +389,17 @@ public final class PetfinderApi {
 
 	String response = httpGET(URI);
 
-	GetShelterListResponse getSheltersResponse = deserialize(
-		GetShelterListResponse.class, response);
+	Gson gson = buildGson();
+
+	Type type = new TypeToken<PetfinderResponse<GetShelterList>>() {
+	}.getType();
+
+	PetfinderResponse<GetShelterList> getSheltersResponse = gson.fromJson(
+		response, type);
 
 	getSheltersResponse.validate();
 
-	return getSheltersResponse.getShelterList();
-
+	return getSheltersResponse.getPetfinder().getShelters();
     }
 
     /**
@@ -397,12 +414,13 @@ public final class PetfinderApi {
      *             response code.
      * @throws IOException
      *             Thrown when the request to the PF API was unsuccessful.
-     * @throws DeserializationException
-     *             Thrown when the response could be be deserialized.
+     * @throws JsonParseException
+     *             Thrown when the JSON response from Petfinder could not be
+     *             parsed by the GSON parser.
      */
-    public List<String> GetBreedList(String animal)
+    public String[] GetBreedList(String animal)
 	    throws InvalidResponseCodeException, IOException,
-	    DeserializationException {
+	    JsonParseException {
 
 	// Generate args
 	final String[] args = { "animal=" + animal };
@@ -411,12 +429,18 @@ public final class PetfinderApi {
 
 	String response = httpGET(URI);
 
-	// Parse XML
-	GetBreedListResponse getBreedListResponse = deserialize(
-		GetBreedListResponse.class, response);
-	getBreedListResponse.validate();
+	Gson gson = buildGson();
 
-	return getBreedListResponse.getBreedList();
+	Type type = new TypeToken<PetfinderResponse<GetBreedList>>() {
+	}.getType();
+
+	// Parse XML
+	PetfinderResponse<GetBreedList> getBreedListResponse = gson.fromJson(
+		response, type);
+
+	getBreedListResponse.getPetfinder().validate();
+
+	return getBreedListResponse.getPetfinder().getBreeds().getBreeds();
     }
 
     /**
@@ -425,19 +449,22 @@ public final class PetfinderApi {
      * @return
      * @throws InvalidResponseCodeException
      * @throws IOException
-     * @throws DeserializationException
+     * @throws JsonParseException
      */
     public Shelter GetShelter(String id) throws InvalidResponseCodeException,
-	    IOException, DeserializationException {
+	    IOException, JsonParseException {
 	// Generate args
 	final String[] args = { "id=" + id };
 	final String URI = genUri(PetfinderApiMethod.GET_SHELTER, args);
 
 	String response = httpGET(URI);
 
-	// Parse XML
-	GetShelterResponse getShelterResponse = deserialize(
-		GetShelterResponse.class, response);
+	Gson gson = buildGson();
+
+	Type type = new TypeToken<PetfinderResponse<GetShelter>>() {
+	}.getType();
+
+	GetShelter getShelterResponse = gson.fromJson(response, type);
 	getShelterResponse.validate();
 
 	return getShelterResponse.getShelter();
@@ -449,24 +476,28 @@ public final class PetfinderApi {
      * @return
      * @throws InvalidResponseCodeException
      * @throws IOException
-     * @throws DeserializationException
+     * @throws JsonParseException
      */
-    public List<Pet> GetShelterPets(String id)
+    public <T extends Pet> T[] GetShelterPets(String id)
 	    throws InvalidResponseCodeException, IOException,
-	    DeserializationException {
+	    JsonParseException {
 	// Generate args
 	final String[] args = { "id=" + id };
 	final String URI = genUri(PetfinderApiMethod.GET_SHELTER_PETS, args);
 
 	String response = httpGET(URI);
 
-	// Parse XML
-	GetShelterPetsResponse getShelterPetsResponse = deserialize(
-		GetShelterPetsResponse.class, response);
+	Gson gson = buildGson();
+
+	Type type = new TypeToken<PetfinderResponse<GetShelterPets<Pet>>>() {
+	}.getType();
+
+	PetfinderResponse<GetShelterPets<T>> getShelterPetsResponse = gson
+		.fromJson(response, type);
+
 	getShelterPetsResponse.validate();
 
-	// return getShelterPetsResponse.getPetList();
-	return new ArrayList<Pet>();
+	return getShelterPetsResponse.getPetfinder().getPets();
     }
 
     /**
@@ -476,11 +507,14 @@ public final class PetfinderApi {
      * @return
      * @throws InvalidResponseCodeException
      * @throws IOException
-     * @throws DeserializationException
+     * @throws JsonParseException
+     * @deprecated This call recently starting returning HTTP 500 errors.
+     *             Deprecating and leaving it in here in the event it's some
+     *             configuration error on their end.
      */
-    public List<Shelter> GetShelterListByBreed(String animal, String breed)
+    public Shelter[] GetShelterListByBreed(String animal, String breed)
 	    throws InvalidResponseCodeException, IOException,
-	    DeserializationException {
+	    JsonParseException {
 	// Generate args
 	final String[] args = { "animal=" + animal, "breed=" + breed };
 	final String URI = genUri(PetfinderApiMethod.GET_SHELTER_LIST_BY_BREED,
@@ -488,12 +522,25 @@ public final class PetfinderApi {
 
 	String response = httpGET(URI);
 
-	// Parse XML
-	GetShelterListByBreedResponse getShelterListByBreedResponse = deserialize(
-		GetShelterListByBreedResponse.class, response);
+	Gson gson = buildGson();
+
+	Type type = new TypeToken<PetfinderResponse<GetShelterListByBreed>>() {
+	}.getType();
+
+	PetfinderResponse<GetShelterListByBreed> getShelterListByBreedResponse = gson
+		.fromJson(response, type);
+
 	getShelterListByBreedResponse.validate();
 
-	return getShelterListByBreedResponse.getPetList();
+	getShelterListByBreedResponse.getPetfinder().getShelterList();
+
+	// getShelterListByBreedResponse = gson
+	// .fromJson(response, GetShelterListByBreedResponse.class);
+
+	// getShelterListByBreedResponse.validate();
+	//
+	// return getShelterListByBreedResponse.getPetList();
+	return null;
     }
 
     /**
@@ -543,13 +590,13 @@ public final class PetfinderApi {
 
 	if (args != null) {
 	    // Loop over all args and append them to StringBuilder
-	    String prefix = "";
 	    for (String arg : args) {
-		builder.append(prefix);
-		prefix = "&";
 		builder.append(arg);
+		builder.append("&");
 	    }
 	}
+
+	builder.append("format=json");
 
 	// Append key
 	builder.append("&key=" + keys[keyId]);
@@ -573,31 +620,31 @@ public final class PetfinderApi {
      * @throws IOException
      */
     private String httpGET(String uri) throws IOException {
+	String str = "";
+	BufferedReader in = null;
 	try {
 	    URL url = new URL(uri);
 
-	    BufferedReader in = new BufferedReader(new InputStreamReader(
-		    url.openStream()));
+	    in = new BufferedReader(new InputStreamReader(url.openStream()));
 	    StringBuilder builder = new StringBuilder();
-	    String str;
 
 	    while ((str = in.readLine()) != null) {
-
 		if (debug)
 		    System.out.println(str);
-
 		builder.append(str);
 	    }
 
-	    in.close();
-	    return builder.toString();
+	    str = builder.toString();
 	} catch (MalformedURLException e) {
 	    System.out.println("MalformedURLException: " + uri);
 	} catch (IOException e) {
 	    System.out.println("IOException trying to GET: " + uri);
 	    throw e;
+	} finally {
+	    if (in != null)
+		in.close();
 	}
-	return "";
+	return str;
     }
 
     /**
@@ -648,7 +695,7 @@ public final class PetfinderApi {
      * @return A {@link Pet} object.
      */
     public Pet getPetFromLastResponse(int index) {
-	return lastPetResponse.get(index);
+	return lastPetResponse[index];
     }
 
     /**
@@ -676,24 +723,11 @@ public final class PetfinderApi {
 	tokenExpires = null;
     }
 
-    /**
-     * Deserializes a response object.
-     * 
-     * @param c
-     *            The object Class to deserialize into.
-     * @param response
-     *            The XML response.
-     * @return The desired object.
-     * @throws DeserializationException
-     *             Thrown when the response could be be deserialized.
-     */
-    private <T> T deserialize(Class<T> c, String response)
-	    throws DeserializationException {
-	try {
-	    Serializer serializer = new Persister();
-	    return serializer.read(c, response);
-	} catch (Exception ex) {
-	    throw new DeserializationException(ex.getMessage());
-	}
+    private Gson buildGson() {
+	GsonBuilder builder = new GsonBuilder();
+	builder.registerTypeAdapter(StringArrayWrapper[].class,
+		new StringArrayAdapter());
+	builder.registerTypeAdapter(Shelter[].class, new ShelterArrayAdapter());
+	return builder.create();
     }
 }
