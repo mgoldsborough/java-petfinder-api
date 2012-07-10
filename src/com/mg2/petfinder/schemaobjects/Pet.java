@@ -110,8 +110,11 @@ public class Pet {
     }
 
     public GenderType getSex() {
-	return GenderType.valueOf(sex.toString());
-
+	for (GenderType type : GenderType.values()) {
+	    if (type.getValue().equals(this.sex))
+		return type;
+	}
+	return null;
     }
 
     public SizeType getSize() {
@@ -135,8 +138,9 @@ public class Pet {
     }
 
     public String getShortDescription() {
-	return String.format("%s/%s, %s", getAge().getName(), getSex()
-		.getName(), getSize().getName());
+	String age = (getAge() == null) ? "Unknown Age" : getAge().getName();
+	String sex = (getSex() == null) ? "Unknown Sex" : getSex().getName();
+	String size = (getSize() == null ? "Unknown Size" : getSize().getName());
+	return String.format("%s/%s, %s", age, sex, size);
     }
-
 }

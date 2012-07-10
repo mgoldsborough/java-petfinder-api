@@ -16,8 +16,6 @@ public class StringArrayAdapter implements
     public StringArrayWrapper[] deserialize(JsonElement json, Type typeOfT,
 	    JsonDeserializationContext ctx) throws JsonParseException {
 
-	System.out.println("Echo!");
-	
 	if (json.isJsonArray()) {
 	    return new Gson().fromJson(json, StringArrayWrapper[].class);
 	}

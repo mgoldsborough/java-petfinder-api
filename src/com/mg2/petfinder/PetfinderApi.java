@@ -151,6 +151,8 @@ public final class PetfinderApi {
      * 
      * @param id
      *            The ID of the pet (integer value from URL).
+     * @param type
+     *            The type to cast to.
      * @return The {@link Pet}.
      * @throws InvalidResponseCodeException
      *             Thrown when something other than
@@ -177,9 +179,6 @@ public final class PetfinderApi {
 	Gson gson = buildGson();
 
 	PetfinderResponse<GetPet<T>> response = new PetfinderResponse<GetPet<T>>();
-
-	// Type type = new TypeToken<PetfinderResponse<GetPet<T>>>() {
-	// }.getType();
 
 	response = gson.fromJson(jsonStr, type);
 
@@ -220,7 +219,7 @@ public final class PetfinderApi {
      *             parsed by the GSON parser.
      */
     public <T extends Pet> T GetRandomPet(String location, String animal,
-	    String breed, String size, String sex, String shelter)
+	    String breed, String size, String sex, String shelter, Type type)
 	    throws InvalidResponseCodeException, IOException,
 	    JsonParseException {
 	List<String> argList = new ArrayList<String>();
@@ -256,9 +255,6 @@ public final class PetfinderApi {
 	String response = httpGET(URI);
 
 	Gson gson = buildGson();
-
-	Type type = new TypeToken<PetfinderResponse<GetPet<Pet>>>() {
-	}.getType();
 
 	// Parse XML
 	PetfinderResponse<GetPet<T>> getPetResponse = gson.fromJson(response,
@@ -301,7 +297,7 @@ public final class PetfinderApi {
      */
     public <T extends Pet> T[] FindPets(String location, String animal,
 	    String breed, String size, String sex, String age, int offset,
-	    int count) throws IOException, JsonParseException,
+	    int count, Type type) throws IOException, JsonParseException,
 	    InvalidResponseCodeException {
 	List<String> argList = new ArrayList<String>();
 
@@ -335,9 +331,6 @@ public final class PetfinderApi {
 	final String URI = genUri(PetfinderApiMethod.FIND_PET, args);
 
 	String response = httpGET(URI);
-
-	Type type = new TypeToken<PetfinderResponse<FindPets<Pet>>>() {
-	}.getType();
 
 	Gson gson = buildGson();
 
@@ -478,7 +471,7 @@ public final class PetfinderApi {
      * @throws IOException
      * @throws JsonParseException
      */
-    public <T extends Pet> T[] GetShelterPets(String id)
+    public <T extends Pet> T[] GetShelterPets(String id, Type type)
 	    throws InvalidResponseCodeException, IOException,
 	    JsonParseException {
 	// Generate args
@@ -488,9 +481,6 @@ public final class PetfinderApi {
 	String response = httpGET(URI);
 
 	Gson gson = buildGson();
-
-	Type type = new TypeToken<PetfinderResponse<GetShelterPets<Pet>>>() {
-	}.getType();
 
 	PetfinderResponse<GetShelterPets<T>> getShelterPetsResponse = gson
 		.fromJson(response, type);
@@ -657,13 +647,8 @@ public final class PetfinderApi {
 
 	// Token has expired, reset authentication
 	else if (tokenExpires.compareTo(Calendar.getInstance().getTime()) < 0) {
-	    try {
-		System.out
-			.println("Auth token is expired. Resetting authentication.");
-	    } catch (NoClassDefFoundError ex) {
-		System.out
-			.println("Auth token is expired. Resetting authentication");
-	    }
+	    System.out
+		    .println("Auth token is expired. Resetting authentication.");
 	    resetAuthentication();
 	    return false;
 	}

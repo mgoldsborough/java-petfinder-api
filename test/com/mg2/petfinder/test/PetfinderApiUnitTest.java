@@ -11,7 +11,9 @@ import com.google.gson.reflect.TypeToken;
 import com.mg2.petfinder.PetfinderApi;
 import com.mg2.petfinder.PetfinderApiResponseCode;
 import com.mg2.petfinder.exceptions.InvalidResponseCodeException;
+import com.mg2.petfinder.responseobjects.FindPets;
 import com.mg2.petfinder.responseobjects.GetPet;
+import com.mg2.petfinder.responseobjects.GetShelterPets;
 import com.mg2.petfinder.responseobjects.PetfinderResponse;
 import com.mg2.petfinder.schemaobjects.Pet;
 import com.mg2.petfinder.schemaobjects.Shelter;
@@ -160,7 +162,9 @@ public class PetfinderApiUnitTest extends TestCase {
 
 	try {
 	    api.Authenticate();
-	    Pet[] pets = api.GetShelterPets("DE20");
+	    Pet[] pets = api.GetShelterPets("DE20",
+		    new TypeToken<PetfinderResponse<GetShelterPets<Pet>>>() {
+		    }.getType());
 	    assertNotNull(pets);
 	} catch (InvalidResponseCodeException e) {
 	    e.printStackTrace();
@@ -176,7 +180,8 @@ public class PetfinderApiUnitTest extends TestCase {
 	try {
 	    // Provide params
 	    Pet[] pets = api.FindPets("19806", null, null, "XL", "F", "Baby",
-		    0, 2);
+		    0, 2, new TypeToken<PetfinderResponse<FindPets<Pet>>>() {
+		    }.getType());
 
 	    assertNotNull(pets);
 

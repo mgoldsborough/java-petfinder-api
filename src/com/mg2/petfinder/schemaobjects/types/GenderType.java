@@ -25,7 +25,7 @@ public enum GenderType {
 	public String getName() {
 		return this.name;
 	}
-
+	
 	public String getValue() {
 		return this.value;
 	}
